@@ -20,7 +20,7 @@ features: [Atomics, SharedArrayBuffer, TypedArray]
 const WAIT_INDEX = 0; // Index all agents are waiting on
 const RUNNING = 1;
 const NUMAGENT = 2;   // Total number of agents started
-const WAKECOUNT = 2;  // Total number of agents to wake up
+const NOTIFYCOUNT = 2;  // Total number of agents to notify up
 
 $262.agent.start(`
   $262.agent.receiveBroadcast(function(sab) {
@@ -48,16 +48,16 @@ const i32a = new Int32Array(
   new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 4)
 );
 
-$262.agent.broadcast(i32a.buffer);
+$262.agent.safeBroadcast(i32a);
 $262.agent.waitUntil(i32a, RUNNING, NUMAGENT);
 
 // Try to yield control to ensure the agent actually started to wait.
 $262.agent.tryYield();
 
 assert.sameValue(
-  Atomics.wake(i32a, WAIT_INDEX, WAKECOUNT),
-  WAKECOUNT,
-  'Atomics.wake(i32a, WAIT_INDEX, WAKECOUNT) returns the value of `WAKECOUNT` (2)'
+  Atomics.notify(i32a, WAIT_INDEX, NOTIFYCOUNT),
+  NOTIFYCOUNT,
+  'Atomics.notify(i32a, WAIT_INDEX, NOTIFYCOUNT) returns the value of `NOTIFYCOUNT` (2)'
 );
 
 const reports = [];

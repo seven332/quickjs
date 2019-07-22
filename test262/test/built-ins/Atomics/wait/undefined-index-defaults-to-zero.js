@@ -39,12 +39,12 @@ const i32a = new Int32Array(
   new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 4)
 );
 
-$262.agent.broadcast(i32a.buffer);
+$262.agent.safeBroadcast(i32a);
 $262.agent.waitUntil(i32a, RUNNING, 1);
 
 // Try to yield control to ensure the agent actually started to wait.
 $262.agent.tryYield();
 
-assert.sameValue(Atomics.wake(i32a, 0), 1, 'Atomics.wake(i32a, 0) returns 1'); // wake at index 0
-assert.sameValue(Atomics.wake(i32a, 0), 0, 'Atomics.wake(i32a, 0) returns 0'); // wake again at index 0, and 0 agents should be woken
+assert.sameValue(Atomics.notify(i32a, 0), 1, 'Atomics.notify(i32a, 0) returns 1'); // notify at index 0
+assert.sameValue(Atomics.notify(i32a, 0), 0, 'Atomics.notify(i32a, 0) returns 0'); // notify again at index 0, and 0 agents should be woken
 assert.sameValue($262.agent.getReport(), 'ok', '$262.agent.getReport() returns "ok"');

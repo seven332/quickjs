@@ -16,11 +16,14 @@ includes: [atomicsHelper.js]
 features: [Atomics, BigInt, SharedArrayBuffer, TypedArray]
 ---*/
 
-var NUMAGENT = 3;
-
 var WAIT_INDEX = 0;
 var RUNNING = 1;
 var LOCK_INDEX = 2;
+var NUMAGENT = 3;
+
+const i64a = new BigInt64Array(
+  new SharedArrayBuffer(BigInt64Array.BYTES_PER_ELEMENT * 4)
+);
 
 for (var i = 0; i < NUMAGENT; i++) {
   var agentNum = i;
@@ -50,11 +53,7 @@ for (var i = 0; i < NUMAGENT; i++) {
   `);
 }
 
-const i64a = new BigInt64Array(
-  new SharedArrayBuffer(BigInt64Array.BYTES_PER_ELEMENT * 4)
-);
-
-$262.agent.broadcast(i64a.buffer);
+$262.agent.safeBroadcast(i64a);
 
 // Wait until all agents started.
 $262.agent.waitUntil(i64a, RUNNING, BigInt(NUMAGENT));
@@ -77,13 +76,13 @@ for (var i = 0; i < NUMAGENT; i++) {
   Atomics.store(i64a, LOCK_INDEX, 0n);
 }
 
-// Agents must wake in the order they waited.
+// Agents must notify in the order they waited.
 for (var i = 0; i < NUMAGENT; i++) {
   var woken = 0;
-  while ((woken = Atomics.wake(i64a, WAIT_INDEX, 1)) === 0) ;
+  while ((woken = Atomics.notify(i64a, WAIT_INDEX, 1)) === 0) ;
 
   assert.sameValue(woken, 1,
-                   'Atomics.wake(i64a, WAIT_INDEX, 1) returns 1, at index = ' + i);
+                   'Atomics.notify(i64a, WAIT_INDEX, 1) returns 1, at index = ' + i);
 
   assert.sameValue($262.agent.getReport(), 'ok',
                    '$262.agent.getReport() returns "ok", at index = ' + i);

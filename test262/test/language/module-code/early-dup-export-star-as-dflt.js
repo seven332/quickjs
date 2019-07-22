@@ -5,14 +5,15 @@ esid: sec-module-semantics-static-semantics-early-errors
 description: >
     It is a Syntax Error if the ExportedNames of ModuleItemList contains any
     duplicate entries.
-flags: [module, export-star-as-namespace-from-module]
+flags: [module]
+features: [export-star-as-namespace-from-module]
 negative:
   phase: parse
   type: SyntaxError
 ---*/
 
-throw "Test262: This statement should not be evaluated.";
+$DONOTEVALUATE();
 
 var x;
 export default x;
-export * as default from 'early-dup-export-start-as-dflt.js';
+export * as default from './early-dup-export-start-as-dflt.js';

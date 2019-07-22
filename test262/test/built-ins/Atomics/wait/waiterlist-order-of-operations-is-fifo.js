@@ -54,7 +54,7 @@ const i32a = new Int32Array(
   new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 4)
 );
 
-$262.agent.broadcast(i32a.buffer);
+$262.agent.safeBroadcast(i32a);
 
 // Wait until all agents started.
 $262.agent.waitUntil(i32a, RUNNING, NUMAGENT);
@@ -77,13 +77,13 @@ for (var i = 0; i < NUMAGENT; i++) {
   Atomics.store(i32a, LOCK_INDEX, 0);
 }
 
-// Agents must wake in the order they waited.
+// Agents must notify in the order they waited.
 for (var i = 0; i < NUMAGENT; i++) {
   var woken = 0;
-  while ((woken = Atomics.wake(i32a, WAIT_INDEX, 1)) === 0) ;
+  while ((woken = Atomics.notify(i32a, WAIT_INDEX, 1)) === 0) ;
 
   assert.sameValue(woken, 1,
-                   'Atomics.wake(i32a, WAIT_INDEX, 1) returns 1, at index = ' + i);
+                   'Atomics.notify(i32a, WAIT_INDEX, 1) returns 1, at index = ' + i);
 
   assert.sameValue($262.agent.getReport(), 'ok',
                    '$262.agent.getReport() returns "ok", at index = ' + i);

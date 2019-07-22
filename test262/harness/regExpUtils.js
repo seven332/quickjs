@@ -5,27 +5,6 @@ description: |
     Collection of functions used to assert the correctness of RegExp objects.
 ---*/
 
-/*
-function buildString({ loneCodePoints, ranges }) {
-  const CHUNK_SIZE = 10000;
-  let result = String.fromCodePoint(...loneCodePoints);
-  for (const [start, end] of ranges) {
-    const codePoints = [];
-    for (let length = 0, codePoint = start; codePoint <= end; codePoint++) {
-      codePoints[length++] = codePoint;
-      if (length === CHUNK_SIZE) {
-        result += String.fromCodePoint(...codePoints);
-        codePoints.length = length = 0;
-      }
-    }
-    result += String.fromCodePoint(...codePoints);
-  }
-  return result;
-}
-*/
-
-var codePointRange;
-
 if ($262 && typeof $262.codePointRange === "function") {
     /* use C function to build the codePointRange (much faster with
        slow JS engines) */
