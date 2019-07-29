@@ -222,10 +222,14 @@ $262.agent.waitUntil = function(typedArray, index, expected) {
  *   }
  */
 $262.agent.timeouts = {
-  yield: 100,
-  small: 200,
-  long: 1000,
-  huge: 10000,
+//  yield: 100,
+//  small: 200,
+//  long: 1000,
+//  huge: 10000,
+  yield: 20,
+  small: 20,
+  long: 100,
+  huge: 1000,
 };
 
 /**
