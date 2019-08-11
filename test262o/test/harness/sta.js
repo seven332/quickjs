@@ -99,8 +99,7 @@ function fnExists(/*arguments*/) {
 }
 
 //-----------------------------------------------------------------------------
-//var __globalObject = Function("return this;")();
-var __globalObject = this;
+var __globalObject = Function("return this;")();
 function fnGlobalObject() {
      return __globalObject;
 }
@@ -449,6 +448,7 @@ var $LocalTZ,
     $DST_end_sunday = dstEnd.getDate() > 15 ? '"last"' : '"first"';
     $DST_end_hour = dstEnd.getHours();
     $DST_end_minutes = dstEnd.getMinutes();
+
     return;
 })();
 
@@ -562,7 +562,6 @@ function WeekDay(t) {
 }
 
 //15.9.1.9 Daylight Saving Time Adjustment
-
 $LocalTZ = (new Date()).getTimezoneOffset() / -60;
 if (DaylightSavingTA((new Date()).valueOf()) !== 0) {
    $LocalTZ -= 1;

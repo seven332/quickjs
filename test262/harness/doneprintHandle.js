@@ -18,6 +18,5 @@ function $DONE(error) {
     }
   } else {
     __consolePrintHandle__('Test262:AsyncTestComplete');
-    $async_done = true;
   }
 }

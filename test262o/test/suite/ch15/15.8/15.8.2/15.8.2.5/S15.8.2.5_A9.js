@@ -9,8 +9,8 @@
  */
 
 // CHECK#1
-var y = -0;
-var x = +0;
+y = -0;
+x = +0;
 if (Math.atan2(y,x) !== -0)
 	$ERROR("#1: Math.atan2(" + y + ", " + x + ") !== -0");
 

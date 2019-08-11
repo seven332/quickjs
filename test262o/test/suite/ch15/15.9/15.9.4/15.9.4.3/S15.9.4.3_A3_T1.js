@@ -8,7 +8,7 @@
  * @description Checking ReadOnly attribute
  */
 
-var x = Date.UTC.length;
+x = Date.UTC.length;
 Date.UTC.length = 1;
 if (Date.UTC.length !== x) {
   $ERROR('#1: The Date.UTC.length has the attribute ReadOnly');

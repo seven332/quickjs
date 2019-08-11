@@ -13,8 +13,8 @@ $INCLUDE("math_isequal.js");
  
 // CHECK#1
 //prec = 0.00000000000001;
-var y = -0;
-var x = -0;
+y = -0;
+x = -0;
 if (!isEqual(Math.atan2(y,x), -Math.PI))
 	$ERROR("#1: !isEqual(Math.atan2(-0,-0), -Math.PI)");
 

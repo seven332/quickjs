@@ -9,7 +9,7 @@
  */
 
 //CHECK#1
-var x = 1;
+x = 1;
 x *= null;
 if (x !== 0) {
   $ERROR('#1: x = 1; x *= null; x === 0. Actual: ' + (x));

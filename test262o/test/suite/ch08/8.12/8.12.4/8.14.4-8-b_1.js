@@ -6,7 +6,6 @@
 /**
  * @path ch08/8.12/8.12.4/8.14.4-8-b_1.js
  * @description Non-writable property on a prototype written to.
- * @noStrict
  */
 
 function testcase() {   

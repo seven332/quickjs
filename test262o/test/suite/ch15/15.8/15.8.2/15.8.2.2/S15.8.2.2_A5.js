@@ -12,7 +12,7 @@ $INCLUDE("math_precision.js");
 $INCLUDE("math_isequal.js");
 
 // CHECK#1
-var vnum = 64;
+vnum = 64;
 var x = new Array();
 x[0] = -1.00000000000000000000;
 x[1] = -0.96825396825396826000;
@@ -151,7 +151,7 @@ y[63] = 0.00000000000000000000;
 
 
 
-var val, i;
+var val;
 for (i = 0; i < vnum; i++)
 {
 	val = Math.acos(x[i]);

@@ -6,7 +6,6 @@
 /**
  * @path ch10/10.4/10.4.2/10.4.2-2-c-1.js
  * @description Direct val code in non-strict mode - can instantiate variable in calling context
- * @noStrict
  */
 
 

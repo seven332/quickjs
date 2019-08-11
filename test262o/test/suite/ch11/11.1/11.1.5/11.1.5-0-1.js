@@ -9,7 +9,6 @@
  *
  * @path ch11/11.1/11.1.5/11.1.5-0-1.js
  * @description Object literal - get set property
- * @noStrict
  */
 
 

@@ -8,7 +8,7 @@
  * @description Function is declared with FormalParameterList
  */
 
-var f_arg = function(x,y) {
+f_arg = function(x,y) {
   return arguments;
 }
 

@@ -8,7 +8,7 @@
  * @description Checking absence of ReadOnly attribute
  */
 
-var x = Date.UTC;
+x = Date.UTC;
 if(x === 1)
   Date.UTC = 2;
 else

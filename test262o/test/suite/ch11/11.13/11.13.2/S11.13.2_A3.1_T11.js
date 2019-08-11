@@ -16,7 +16,7 @@ if (x !== 1) {
 }
 
 //CHECK#2
-var y = 1;
+y = 1;
 y |= 0;
 if (y !== 1) {
   $ERROR('#2: y = 1; y |= 0; y === 1. Actual: ' + (y));

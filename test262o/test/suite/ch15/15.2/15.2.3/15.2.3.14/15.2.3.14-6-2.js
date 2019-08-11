@@ -20,7 +20,7 @@ function testcase() {
         }
 
         var returnedArray = Object.keys(sparseArray);
-    
+
         for (var index in returnedArray) {
             if (tempArray[index] !== returnedArray[index]) {
                 return false;
