@@ -1,8 +1,8 @@
 /*
  * QuickJS stand alone interpreter
  * 
- * Copyright (c) 2017-2020 Fabrice Bellard
- * Copyright (c) 2017-2020 Charlie Gordon
+ * Copyright (c) 2017-2021 Fabrice Bellard
+ * Copyright (c) 2017-2021 Charlie Gordon
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -41,14 +41,12 @@
 #include "cutils.h"
 #include "quickjs-libc.h"
 
-/* enable bignums */
-#define CONFIG_BIGNUM
-
 extern const uint8_t qjsc_repl[];
 extern const uint32_t qjsc_repl_size;
 #ifdef CONFIG_BIGNUM
 extern const uint8_t qjsc_qjscalc[];
 extern const uint32_t qjsc_qjscalc_size;
+static int bignum_ext;
 #endif
 
 static int eval_buf(JSContext *ctx, const void *buf, int buf_len,
@@ -104,6 +102,27 @@ static int eval_file(JSContext *ctx, const char *filename, int module)
     return ret;
 }
 
+/* also used to initialize the worker context */
+static JSContext *JS_NewCustomContext(JSRuntime *rt)
+{
+    JSContext *ctx;
+    ctx = JS_NewContext(rt);
+    if (!ctx)
+        return NULL;
+#ifdef CONFIG_BIGNUM
+    if (bignum_ext) {
+        JS_AddIntrinsicBigFloat(ctx);
+        JS_AddIntrinsicBigDecimal(ctx);
+        JS_AddIntrinsicOperators(ctx);
+        JS_EnableBignumExt(ctx, TRUE);
+    }
+#endif
+    /* system modules */
+    js_init_module_std(ctx, "std");
+    js_init_module_os(ctx, "os");
+    return ctx;
+}
+
 #if defined(__APPLE__)
 #define MALLOC_OVERHEAD  0
 #else
@@ -137,7 +156,13 @@ static inline size_t js_trace_malloc_usable_size(void *ptr)
 #endif
 }
 
-static void __attribute__((format(printf, 2, 3)))
+static void
+#ifdef _WIN32
+/* mingw printf is used */
+__attribute__((format(gnu_printf, 2, 3)))
+#else
+__attribute__((format(printf, 2, 3)))
+#endif
     js_trace_malloc_printf(JSMallocState *s, const char *fmt, ...)
 {
     va_list ap;
@@ -258,12 +283,13 @@ static const JSMallocFunctions trace_mf = {
 void help(void)
 {
     printf("QuickJS version " CONFIG_VERSION "\n"
-           "usage: " PROG_NAME " [options] [file]\n"
+           "usage: " PROG_NAME " [options] [file [args]]\n"
            "-h  --help         list options\n"
            "-e  --eval EXPR    evaluate EXPR\n"
            "-i  --interactive  go to interactive mode\n"
            "-m  --module       load as ES6 module (default=autodetect)\n"
            "    --script       load as ES6 script (default=autodetect)\n"
+           "-I  --include file include an additional file\n"
            "    --std          make 'std' and 'os' available to the loaded script\n"
 #ifdef CONFIG_BIGNUM
            "    --bignum       enable the bignum extensions (BigFloat, BigDecimal)\n"
@@ -272,6 +298,7 @@ void help(void)
            "-T  --trace        trace memory allocation\n"
            "-d  --dump         dump the memory usage stats\n"
            "    --memory-limit n       limit the memory usage to 'n' bytes\n"
+           "    --stack-size n         limit the stack size to 'n' bytes\n"
            "    --unhandled-rejection  dump unhandled promise rejections\n"
            "-q  --quit         just instantiate the interpreter and quit\n");
     exit(1);
@@ -292,10 +319,13 @@ int main(int argc, char **argv)
     int load_std = 0;
     int dump_unhandled_promise_rejection = 0;
     size_t memory_limit = 0;
+    char *include_list[32];
+    int i, include_count = 0;
 #ifdef CONFIG_BIGNUM
-    int load_jscalc, bignum_ext = 0;
+    int load_jscalc;
 #endif
-
+    size_t stack_size = 0;
+    
 #ifdef CONFIG_BIGNUM
     /* load jscalc runtime if invoked as 'qjscalc' */
     {
@@ -344,6 +374,18 @@ int main(int argc, char **argv)
                 }
                 fprintf(stderr, "qjs: missing expression for -e\n");
                 exit(2);
+            }
+            if (opt == 'I' || !strcmp(longopt, "include")) {
+                if (optind >= argc) {
+                    fprintf(stderr, "expecting filename");
+                    exit(1);
+                }
+                if (include_count >= countof(include_list)) {
+                    fprintf(stderr, "too many included files");
+                    exit(1);
+                }
+                include_list[include_count++] = argv[optind++];
+                continue;
             }
             if (opt == 'i' || !strcmp(longopt, "interactive")) {
                 interactive++;
@@ -395,6 +437,14 @@ int main(int argc, char **argv)
                 memory_limit = (size_t)strtod(argv[optind++], NULL);
                 continue;
             }
+            if (!strcmp(longopt, "stack-size")) {
+                if (optind >= argc) {
+                    fprintf(stderr, "expecting stack size");
+                    exit(1);
+                }
+                stack_size = (size_t)strtod(argv[optind++], NULL);
+                continue;
+            }
             if (opt) {
                 fprintf(stderr, "qjs: unknown option '-%c'\n", opt);
             } else {
@@ -403,6 +453,9 @@ int main(int argc, char **argv)
             help();
         }
     }
+
+    if (load_jscalc)
+        bignum_ext = 1;
 
     if (trace_memory) {
         js_trace_malloc_init(&trace_data);
@@ -416,20 +469,16 @@ int main(int argc, char **argv)
     }
     if (memory_limit != 0)
         JS_SetMemoryLimit(rt, memory_limit);
-    ctx = JS_NewContext(rt);
+    if (stack_size != 0)
+        JS_SetMaxStackSize(rt, stack_size);
+    js_std_set_worker_new_context_func(JS_NewCustomContext);
+    js_std_init_handlers(rt);
+    ctx = JS_NewCustomContext(rt);
     if (!ctx) {
         fprintf(stderr, "qjs: cannot allocate JS context\n");
         exit(2);
     }
 
-#ifdef CONFIG_BIGNUM
-    if (bignum_ext || load_jscalc) {
-        JS_AddIntrinsicBigFloat(ctx);
-        JS_AddIntrinsicBigDecimal(ctx);
-        JS_EnableBignumExt(ctx, TRUE);
-    }
-#endif
-    
     /* loader for ES6 modules */
     JS_SetModuleLoaderFunc(rt, NULL, js_module_loader, NULL);
 
@@ -446,10 +495,6 @@ int main(int argc, char **argv)
 #endif
         js_std_add_helpers(ctx, argc - optind, argv + optind);
 
-        /* system modules */
-        js_init_module_std(ctx, "std");
-        js_init_module_os(ctx, "os");
-
         /* make 'std' and 'os' visible to non module code */
         if (load_std) {
             const char *str = "import * as std from 'std';\n"
@@ -457,6 +502,11 @@ int main(int argc, char **argv)
                 "globalThis.std = std;\n"
                 "globalThis.os = os;\n";
             eval_buf(ctx, str, strlen(str), "<input>", JS_EVAL_TYPE_MODULE);
+        }
+
+        for(i = 0; i < include_count; i++) {
+            if (eval_file(ctx, include_list[i], module))
+                goto fail;
         }
 
         if (expr) {
